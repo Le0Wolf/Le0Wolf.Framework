@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Le0Wolf.Framework.Common\Le0Wolf.Framework.Common.csproj" />
+    <ProjectReference Include="..\Le0Wolf.Framework.Templates.Parser\Le0Wolf.Framework.Templates.Parser.csproj" />
+  </ItemGroup>
+
+</Project>

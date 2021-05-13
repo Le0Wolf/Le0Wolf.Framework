@@ -27,20 +27,62 @@ namespace Le0Wolf.Framework.Modules
         {
             this.modules = new List<IStartup>();
 
-            var all = Assembly
-                .GetEntryAssembly()
-                .GetReferencedAssemblies()
-                .Select(Assembly.Load)
-                .SelectMany(x => x.DefinedTypes)
-                .Where(type =>
+            var loadedAssemblies = new HashSet<string>();
+
+            var dependenciesTypes
+                = additionalDependencies.ToDictionary(x => x.GetType());
+
+            this.LoadFromAssembly(Assembly.GetEntryAssembly(),
+                dependenciesTypes, loadedAssemblies);
+        }
+
+        public void ConfigureServices(IServiceCollection services)
+        {
+            foreach (var module in this.modules)
+            {
+                module.ConfigureServices(services);
+            }
+        }
+
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            foreach (var module in this.modules)
+            {
+                module.Configure(app, env);
+            }
+        }
+
+        private void LoadFromAssembly(Assembly assembly,
+            Dictionary<Type, object> dependenciesTypes,
+            HashSet<string> loadedAssemblies)
+        {
+            var all = assembly.GetReferencedAssemblies();
+            foreach (var assemblyName in all)
+            {
+                if (assemblyName.FullName.StartsWith("System") ||
+                    assemblyName.FullName.StartsWith("Microsoft") ||
+                    !loadedAssemblies.Add(assemblyName.FullName))
+                {
+                    continue;
+                }
+
+                var next = Assembly.Load(assemblyName);
+
+                this.LoadFromAssembly(next, dependenciesTypes,
+                    loadedAssemblies);
+                this.LoadFromAssembly(next, dependenciesTypes);
+            }
+        }
+
+        private void LoadFromAssembly(Assembly assembly,
+            Dictionary<Type, object> dependenciesTypes)
+        {
+            var all = assembly.DefinedTypes.Where(type =>
                     typeof(IStartup).IsAssignableFrom(type) && type.IsPublic &&
                     !type.IsGenericType && !type.IsAbstract)
                 .Where(type =>
                     !Attribute.IsDefined(type, typeof(NonModuleAttribute)))
                 .ToList();
-
-            var dependenciesTypes
-                = additionalDependencies.ToDictionary(x => x.GetType());
 
             foreach (var moduleType in all)
             {
@@ -100,22 +142,6 @@ namespace Le0Wolf.Framework.Modules
                     .ToArray();
                 var startup = (IStartup)bestMatch.Invoke(values);
                 this.modules.Add(startup);
-            }
-        }
-
-        public void ConfigureServices(IServiceCollection services)
-        {
-            foreach (var module in this.modules)
-            {
-                module.ConfigureServices(services);
-            }
-        }
-
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-        {
-            foreach (var module in this.modules)
-            {
-                module.Configure(app, env);
             }
         }
     }

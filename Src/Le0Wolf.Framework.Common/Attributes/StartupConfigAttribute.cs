@@ -13,7 +13,7 @@ namespace Le0Wolf.Framework.Common.Attributes
     ///     Атрибут конфигурации, загружаемой при старте приложения
     /// </summary>
     [AttributeUsage(AttributeTargets.Class)]
-    internal sealed class StartupConfigAttribute : Attribute
+    public sealed class StartupConfigAttribute : Attribute
     {
         /// <summary>
         ///     Создает экземпляр <see cref="StartupConfigAttribute" />
